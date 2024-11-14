@@ -21,6 +21,13 @@ query[0] = 0x1b;
 
 var test1 = FromBinaryReader<NtpPacket>(query);
 
+var p1 = new NtpPacket
+{
+    LeapIndicator = NtpLeapIndicator.LastMinute59,
+    VersionNumber = 7,
+    Mode = NtpMode.ReservedForPrivateUse
+};
+
 await client.SendAsync(query);
 
 var result = await client.ReceiveAsync();

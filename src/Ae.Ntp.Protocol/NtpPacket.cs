@@ -1,8 +1,11 @@
+using System.Collections;
+using System.Threading.Tasks;
+
 namespace Ae.Ntp.Protocol;
 
 public struct NtpPacket
 {
-    public sbyte Flags;
+    public byte Flags;
     public sbyte Stratum;
     public sbyte Poll;
     public sbyte Precision;
@@ -17,14 +20,17 @@ public struct NtpPacket
     public NtpLeapIndicator LeapIndicator
     {
         get => (NtpLeapIndicator)(Flags >> 6);
+        set => Flags = (byte)((Flags & ~0xc0) | ((byte)value << 6));
     }
     public byte VersionNumber
     {
         get => (byte)((Flags & 0x38) >> 3);
+        set => Flags = (byte)((Flags & ~0x38) | (value << 3));
     }
     public NtpMode Mode
     {
         get => (NtpMode)(Flags & 0x7);
+        set => Flags = (byte)((Flags & ~0x7) | ((byte)value << 0));
     }
     public double PrecisionMarshaled
     {
