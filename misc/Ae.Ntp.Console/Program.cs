@@ -1,66 +1,255 @@
-﻿using Ae.Ntp.Protocol;
-using ro.bocan.sntpclient;
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
+﻿using Ae.Ntp.Client;
+using Ae.Ntp.Protocol;
+using Ae.Ntp.Server;
 
-var sntp = new SNTPClient();
-sntp.Connect("uk.pool.ntp.org", 5000);
-
-var p0 = new NtpPacket();
-int offset = 0;
-p0.ReadBytes(sntp.SNTPData, ref offset);
-
-Debug.Assert(sntp.PollInterval == p0.PollIntervalMarshaled);
-Debug.Assert(sntp.Precision == p0.PrecisionMarshaled);
-Console.WriteLine(p0.ReceiveTimestamp);
-
-//var seconds = (p0.RootDelay >> 16) & 0xFFFF;
-//var fraction = p0.RootDelay & 0xFFFF;
-//var fraction_seconds = (double)fraction / 0xFFFF;
-//var f = fraction_seconds * 1000;
-
-//var t1 = Convert.ToString(p0.RootDelay, 2);
-
-var delay = p0.RootDelay;
-
-var m = new NtpShort { Marshaled = p0.RootDelay.Marshaled };
-
-var n = new NtpTimestamp { Marshaled = p0.ReceiveTimestamp.Marshaled };
-
-var frac = p0.RootDelay.Seconds + (p0.RootDelay.Fraction / (double)ushort.MaxValue * 1000);
-
-var size = Marshal.SizeOf(typeof(NtpPacket));
-
-var client = new UdpClient("uk.pool.ntp.org", 123);
-
-var query = new byte[48];
-query[0] = 0x1b;
-
-var queryPacket = new NtpPacket();
-var qp = 0;
-queryPacket.ReadBytes(query, ref qp);
-
-//var test1 = FromBinaryReader<NtpPacket>(query);
-
-var p1 = new NtpPacket
+namespace Ae.Ntp.Console
 {
-    Mode = NtpMode.Client,
-    VersionNumber = 3
-};
+    class Program
+    {
+        static void Main(string[] args) => DoWork(args).GetAwaiter().GetResult();
 
-var q1 = new byte[48];
+        private static async Task DoWork(string[] args)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+                .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "config.json"), true)
+                .Build();
 
-var t = 0;
-p1.WriteBytes(q1, ref t);
-await client.SendAsync(q1);
+            var ntpConfiguration = new NtpConfiguration();
+            configuration.Bind(ntpConfiguration);
 
-var result = await client.ReceiveAsync();
+            var services = new ServiceCollection();
+            services.AddLogging(x => x.AddConsole());
+            services.Configure<NtpUdpServerOptions>(configuration.GetSection("udpServer"));
+            //services.Configure<DnsTcpServerOptions>(configuration.GetSection("tcpServer"));
 
-var packet = new NtpPacket();
-var o = 0;
-packet.ReadBytes(result.Buffer, ref o);
+            //const string staticDnsResolverHttpClient = "StaticResolver";
+            //services.AddHttpClient(staticDnsResolverHttpClient, x => x.BaseAddress = new Uri("https://1.1.1.1/"))
+            //        .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
 
-//var test = FromBinaryReader<NtpPacket>(result.Buffer);
+            //services.AddSingleton<ObjectCache>(new MemoryCache("ResolverCache"));
 
-Console.ReadLine();
+            //static DnsDelegatingHandler CreateDnsDelegatingHandler(IServiceProvider serviceProvider)
+            //{
+            //    var httpClient = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(staticDnsResolverHttpClient);
+            //    var cachingClient = ActivatorUtilities.CreateInstance<DnsCachingClient>(serviceProvider, new DnsHttpClient(httpClient));
+            //    return new DnsDelegatingHandler(cachingClient);
+            //}
+
+            //foreach (Uri httpsUpstream in dnsConfiguration.HttpsUpstreams)
+            //{
+            //    services.AddHttpClient<IDnsClient, DnsHttpClient>(Guid.NewGuid().ToString(), x => x.BaseAddress = httpsUpstream)
+            //            .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
+            //            .AddHttpMessageHandler(CreateDnsDelegatingHandler);
+            //}
+
+            //foreach (IPAddress udpUpstream in dnsConfiguration.UdpUpstreams.Select(IPAddress.Parse))
+            //{
+            //    services.AddSingleton<IDnsClient>(new DnsUdpClient(udpUpstream));
+            //}
+
+            //services.AddHttpClient<DnsRemoteSetFilter>()
+            //        .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
+            //        .AddHttpMessageHandler(CreateDnsDelegatingHandler);
+
+            //services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
+
+            IServiceProvider provider = services.BuildServiceProvider();
+
+            var selfLogger = provider.GetRequiredService<ILogger<Program>>();
+
+            selfLogger.LogInformation("Working directory is {WorkingDirectory}", Directory.GetCurrentDirectory());
+
+            //var remoteFilter = provider.GetRequiredService<DnsRemoteSetFilter>();
+
+            //selfLogger.LogInformation("Adding {RemoteBlocklistCount} remote blocklists", dnsConfiguration.RemoteBlocklists.Length);
+
+            //foreach (Uri remoteBlockList in dnsConfiguration.RemoteBlocklists)
+            //{
+            //    _ = remoteFilter.AddRemoteBlockList(remoteBlockList);
+            //}
+
+            //IDnsClient[] upstreams = provider.GetServices<IDnsClient>().ToArray();
+            //if (!upstreams.Any())
+            //{
+            //    throw new Exception("No upstream DNS servers specified - you must specify at least one");
+            //}
+
+            //selfLogger.LogInformation("Using {UpstreamCount} DNS upstreams", upstreams.Length);
+
+            //IDnsClient queryClient;
+            //if (dnsConfiguration.ClientGroups.Any())
+            //{
+            //    IDnsClient FindUpstreamByTag(string tag)
+            //    {
+            //        var upstream = upstreams.SingleOrDefault(x => string.Equals(x.ToString(), tag));
+            //        if (upstream == null)
+            //        {
+            //            throw new Exception($"DNS upstream client with tag {tag} not found. Available tags: {string.Join(", ", upstreams.Select(x => x.ToString()))}");
+            //        }
+            //        return upstream;
+            //    }
+
+            //    var groupRacerOptions = new DnsGroupRacerClientOptions
+            //    {
+            //        DnsClientGroups = dnsConfiguration.ClientGroups.ToDictionary(x => x.Key, x => (IReadOnlyList<IDnsClient>)x.Value.Select(y => FindUpstreamByTag(y)).ToArray())
+            //    };
+
+            //    queryClient = ActivatorUtilities.CreateInstance<DnsGroupRacerClient>(provider, Options.Create(groupRacerOptions));
+            //}
+            //else
+            //{
+            //    queryClient = ActivatorUtilities.CreateInstance<DnsRacerClient>(provider, upstreams.AsEnumerable());
+            //}
+            INtpClient queryClient = ActivatorUtilities.CreateInstance<NtpSystemTimeClient>(provider);
+
+            //queryClient = ActivatorUtilities.CreateInstance<DnsRebindMitigationClient>(provider, queryClient);
+
+            //ObjectCache mainCache = new MemoryCache("MainCache");
+
+            //queryClient = ActivatorUtilities.CreateInstance<DnsCachingClient>(provider, queryClient, mainCache);
+
+            //selfLogger.LogInformation("Adding {AllowListedDomains} domains to explicit allow list", dnsConfiguration.AllowlistedDomains.Length);
+
+            //var allowListFilter = new DnsDelegateFilter(x => dnsConfiguration.AllowlistedDomains.Contains(x.Header.Host.ToString()));
+
+            //selfLogger.LogInformation("Adding {DisallowedDomainPrefixes} domain suffixes to explicit disallow list", dnsConfiguration.DisallowedDomainSuffixes.Length);
+
+            //var suffixFilter = new DnsDomainSuffixFilter(dnsConfiguration.DisallowedDomainSuffixes);
+
+            //var networkFilter = new DnsLocalNetworkQueryFilter();
+
+            //var queryTypeFilter = new DnsQueryTypeFilter(dnsConfiguration.DisallowedQueryTypes.Select(Enum.Parse<DnsQueryType>));
+
+            // The domain must pass all of these filters to be allowed
+            //var denyFilter = new DnsCompositeAndFilter(remoteFilter, suffixFilter, networkFilter, queryTypeFilter);
+
+            // The domain must pass one of these filters to be allowed
+            //var compositeFilter = new DnsCompositeOrFilter(denyFilter, allowListFilter);
+
+            //queryClient = ActivatorUtilities.CreateInstance<DnsFilterClient>(provider, compositeFilter, queryClient);
+
+            //var metricsBuilder = new MetricsBuilder();
+
+            //var metrics = new MetricsBuilder().OutputMetrics.AsPrometheusPlainText().Build();
+
+            //async Task ReportStats(CancellationToken token)
+            //{
+            //    while (!token.IsCancellationRequested)
+            //    {
+            //        try
+            //        {
+            //            await Task.WhenAll(metrics.ReportRunner.RunAllAsync(token));
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            selfLogger.LogWarning(ex, "Unable to report statistics");
+            //        }
+            //        await Task.Delay(TimeSpan.FromSeconds(10), token);
+            //    }
+            //}
+
+            //var staticLookupSources = new List<IDnsLookupSource>();
+
+            //foreach (var hostFile in dnsConfiguration.HostFiles)
+            //{
+            //    staticLookupSources.Add(ActivatorUtilities.CreateInstance<HostsFileDnsLookupSource>(provider, new FileInfo(hostFile)));
+            //}
+
+            //IDnsClient updateClient = DnsNotImplementedClient.Instance;
+
+            //if (dnsConfiguration.UpdateZoneName != null)
+            //{
+            //    var dnsZone = new SingleWriterDnsZone();
+            //    var zoneFile = $"{dnsConfiguration.UpdateZoneName}.zone";
+
+            //    if (File.Exists(zoneFile))
+            //    {
+            //        // Load the existing zone file
+            //        DnsZoneSerializer.DeserializeZone(dnsZone, File.ReadAllText(zoneFile));
+            //        selfLogger.LogInformation("Loaded {RecordCount} records from zone file {ZoneFile}", dnsZone.Records.Count, zoneFile);
+            //    }
+            //    else
+            //    {
+            //        // Set some defaults for the new zone
+            //        dnsZone.Origin = dnsConfiguration.UpdateZoneName;
+            //        dnsZone.DefaultTtl = TimeSpan.FromHours(1);
+            //        selfLogger.LogInformation("Created new zone backed by {ZoneFile}", zoneFile);
+            //    }
+
+            //    // Update the file when the zone is updated
+            //    dnsZone.ZoneUpdated = async zone => await File.WriteAllTextAsync(zoneFile, DnsZoneSerializer.SerializeZone(zone));
+
+            //    // Replace the clients with clients for the zone
+            //    queryClient = new DnsZoneClient(queryClient, dnsZone);
+            //    updateClient = ActivatorUtilities.CreateInstance<DnsZoneUpdateClient>(provider, dnsZone);
+
+            //    // Add the zone file as a source of automatic reverse lookups
+            //    staticLookupSources.Add(new DnsZoneLookupSource(dnsZone));
+            //}
+
+            //if (staticLookupSources.Count > 0)
+            //{
+            //    queryClient = new DnsStaticLookupClient(queryClient, staticLookupSources.ToArray());
+            //}
+
+            //// Route query and update operations as appropriate
+            //IDnsClient operationClient = new DnsOperationRouter(new Dictionary<DnsOperationCode, IDnsClient>
+            //{
+            //    { DnsOperationCode.QUERY, queryClient },
+            //    { DnsOperationCode.UPDATE, updateClient }
+            //});
+
+            //// Track metrics last
+            //operationClient = new DnsMetricsClient(operationClient);
+            //operationClient = new DnsAppMetricsClient(metrics, operationClient);
+
+            // Create a "raw" client which deals with buffers directly
+            INtpRawClient rawClient = ActivatorUtilities.CreateInstance<NtpRawClient>(provider, queryClient);
+
+            // Create a dormant capture client for debugging purposes
+            //DnsCaptureRawClient captureRawClient = ActivatorUtilities.CreateInstance<DnsCaptureRawClient>(provider, rawClient);
+
+            // Create two servers, TCP and UDP to serve answers
+            //IDnsServer tcpServer = ActivatorUtilities.CreateInstance<DnsTcpServer>(provider, captureRawClient);
+            INtpServer udpServer = ActivatorUtilities.CreateInstance<NtpUdpServer>(provider, rawClient);
+
+            // Add a very basic stats panel
+            var builder = Host.CreateDefaultBuilder()
+                //.ConfigureMetrics(metrics)
+                //.UseMetrics(options =>
+                //{
+                //    options.EndpointOptions = endpointsOptions =>
+                //    {
+                //        endpointsOptions.MetricsTextEndpointOutputFormatter = metrics.OutputMetricsFormatters.OfType<MetricsPrometheusTextOutputFormatter>().First();
+                //    };
+                //})
+                .ConfigureLogging(x =>
+                {
+                    x.AddConsole();
+                    x.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
+                    x.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
+                })
+                .ConfigureWebHostDefaults(webHostBuilder =>
+                {
+                    webHostBuilder.UseStartup<Startup>();
+                    webHostBuilder.UseConfiguration(configuration.GetSection("statsServer"));
+                })
+                .ConfigureServices(x =>
+                {
+                    //x.AddSingleton(captureRawClient);
+                    //x.AddSingleton(mainCache);
+                    //x.AddSingleton<IDnsMiddlewareConfig>(new DnsMiddlewareConfig());
+                    //x.AddSingleton(operationClient);
+                });
+
+            await Task.WhenAll(
+                builder.Build().RunAsync(CancellationToken.None),
+                //ReportStats(CancellationToken.None),
+                udpServer.Listen(CancellationToken.None)
+                //tcpServer.Listen(CancellationToken.None)
+            );
+        }
+    }
+}

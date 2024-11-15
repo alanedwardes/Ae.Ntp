@@ -8,8 +8,8 @@ namespace Ae.Ntp.Server
     public abstract class NtpSocketServerOptions
     {
         /// <summary>
-        /// The default endpoint to listen on, for example 0.0.0.0:53
+        /// The default endpoint to listen on, for example 0.0.0.0:123
         /// </summary>
-        public EndPoint Endpoint { get; set; } = new IPEndPoint(IPAddress.Any, 53);
+        public EndPoint Endpoint { get; set; } = new IPEndPoint(IPAddress.Any, 123);
     }
 }

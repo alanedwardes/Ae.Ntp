@@ -26,7 +26,7 @@ namespace Ae.Ntp.Client
         /// Convert an <see cref="IPAddress"/> to a <see cref="NtpUdpClientOptions"/>.
         /// </summary>
         /// <param name="d"></param>
-        public static implicit operator NtpUdpClientOptions(IPAddress d) => new NtpUdpClientOptions { Endpoint = new IPEndPoint(d, 53) };
+        public static implicit operator NtpUdpClientOptions(IPAddress d) => new NtpUdpClientOptions { Endpoint = new IPEndPoint(d, 123) };
         /// <summary>
         /// Convert an <see cref="IPEndPoint"/> to a <see cref="NtpUdpClientOptions"/>.
         /// </summary>
@@ -43,7 +43,7 @@ namespace Ae.Ntp.Client
         /// Convert an <see cref="IPAddress"/> to a <see cref="NtpTcpClientOptions"/>.
         /// </summary>
         /// <param name="d"></param>
-        public static implicit operator NtpTcpClientOptions(IPAddress d) => new NtpTcpClientOptions { Endpoint = new IPEndPoint(d, 53) };
+        public static implicit operator NtpTcpClientOptions(IPAddress d) => new NtpTcpClientOptions { Endpoint = new IPEndPoint(d, 123) };
         /// <summary>
         /// Convert an <see cref="IPEndPoint"/> to a <see cref="NtpTcpClientOptions"/>.
         /// </summary>
