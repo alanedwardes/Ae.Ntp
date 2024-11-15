@@ -1,6 +1,7 @@
 using Ae.Ntp.Client;
 using Ae.Ntp.Protocol;
 using System.Net;
+using Xunit;
 
 namespace Ae.Ntp.Tests;
 
