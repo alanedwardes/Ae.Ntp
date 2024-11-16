@@ -57,6 +57,14 @@ namespace Ae.Ntp.Client
                 throw;
             }
 
+            if (!answer.ReceiveTimestamp.Equals(NtpTimestamp.Zero) || !answer.TransmitTimestamp.Equals(NtpTimestamp.Zero))
+            {
+                throw new InvalidOperationException($"The {nameof(NtpPacket.ReceiveTimestamp)} and {nameof(NtpPacket.TransmitTimestamp)} must be zero.");
+            }
+
+            answer.ReceiveTimestamp = new NtpTimestamp { Marshaled = request.ReceiveTime };
+            answer.TransmitTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow };
+
             var answerLength = 0;
             try
             {

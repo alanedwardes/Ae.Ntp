@@ -164,5 +164,7 @@ public struct NtpTimestamp
         }
     }
 
+    public static readonly NtpTimestamp Zero = new();
+
     public override string ToString() => Marshaled.ToString();
 }

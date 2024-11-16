@@ -28,11 +28,13 @@ namespace Ae.Ntp.Protocol
         /// </summary>
         /// <param name="queryLength">The length of the query, in bytes.</param>
         /// <param name="sourceEndpoint">The source endpoint for statistical purposes.</param>
+        /// <param name="receiveTime">The timestamp showing when the packet was received.</param>
         /// <param name="serverName">The source server for statistical purposes.</param>
-        public NtpRawClientRequest(int queryLength, EndPoint sourceEndpoint, string serverName)
+        public NtpRawClientRequest(int queryLength, EndPoint sourceEndpoint, DateTime receiveTime, string serverName)
         {
             QueryLength = queryLength;
             SourceEndpoint = sourceEndpoint;
+            ReceiveTime = receiveTime;
             ServerName = serverName;
         }
 
@@ -50,6 +52,11 @@ namespace Ae.Ntp.Protocol
         /// The source server for statistical purposes.
         /// </summary>
         public readonly string ServerName;
+
+        /// <summary>
+        /// The time when the packet was receieved.
+        /// </summary>
+        public readonly DateTime ReceiveTime;
     }
 
     /// <summary>

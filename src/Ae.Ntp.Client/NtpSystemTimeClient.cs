@@ -15,10 +15,8 @@ namespace Ae.Ntp.Client
                 VersionNumber = 3,
                 Stratum = 3,
                 Mode = NtpMode.Server,
-                ReceiveTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow },
-                TransmitTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow },
                 ReferenceTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow },
-                OriginateTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow }
+                OriginateTimestamp = query.TransmitTimestamp
             };
 
             return Task.FromResult(test);
