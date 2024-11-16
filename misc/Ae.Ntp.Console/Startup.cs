@@ -99,15 +99,9 @@ namespace Ae.Ntp.Console
 
                 var filteredQueries = query.ToArray();
 
-                var reverseLookups = (await Task.WhenAll(filteredQueries.Where(x => x.Sender != null).Select(x => x.Sender).Distinct().Select(async x =>
-                {
-                    var answer = await Dns.GetHostEntryAsync(x);
-                    return (x, answer.HostName);
-                }))).ToDictionary(x => x.x, x => x.Item2);
-
                 string SenderFilter(NtpStatistic ntpStatistic)
                 {
-                    return $"<a href=\"{CreateQueryString("sender", ntpStatistic.Sender)}\">{reverseLookups[ntpStatistic.Sender] ?? ntpStatistic.Sender.ToString()}</a>";
+                    return $"<a href=\"{CreateQueryString("sender", ntpStatistic.Sender)}\">{ntpStatistic.Sender}</a>";
                 }
 
                 string ServerFilter(NtpStatistic ntpStatistic)
