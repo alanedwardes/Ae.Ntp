@@ -206,6 +206,8 @@ namespace Ae.Ntp.Console
             //operationClient = new DnsAppMetricsClient(metrics, operationClient);
 
             // Create a "raw" client which deals with buffers directly
+            queryClient = new NtpMetricsClient(queryClient);
+
             INtpRawClient rawClient = ActivatorUtilities.CreateInstance<NtpRawClient>(provider, queryClient);
 
             // Create a dormant capture client for debugging purposes

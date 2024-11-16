@@ -71,8 +71,7 @@ namespace Ae.Ntp.Client
             var answerBuffer = buffer.Slice(offset, received.ReceivedBytes);
 
             var answer = NtpByteExtensions.FromBytes<NtpPacket>(answerBuffer);
-            //answer.Header.Tags.Add("Resolver", ToString());
-            //answer.Header.Tags.Add("Upstream", true);
+            answer.Tags.Add("Clock", ToString());
             return answer;
         }
 

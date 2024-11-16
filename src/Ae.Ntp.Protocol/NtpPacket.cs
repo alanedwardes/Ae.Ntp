@@ -103,6 +103,12 @@ public struct NtpPacket : INtpByteArrayReader, INtpByteArrayWriter
         NtpByteExtensions.ToBytes(ReceiveTimestamp, bytes, ref offset);
         NtpByteExtensions.ToBytes(TransmitTimestamp, bytes, ref offset);
     }
+
+    /// <summary>
+    /// A generic bag of tags associated with this object.
+    /// Will not be serialised and/or passed over the wire.
+    /// </summary>
+    public IDictionary<string, object> Tags { get; } = new Dictionary<string, object>();
 }
 
 public enum NtpMode : byte

@@ -43,8 +43,8 @@ namespace Ae.Ntp.Client
                 throw;
             }
 
-            //query.Header.Tags.Add("Sender", request.SourceEndpoint);
-            //query.Header.Tags.Add("Server", request.ServerName);
+            query.Tags.Add("Sender", request.SourceEndpoint);
+            query.Tags.Add("Server", request.ServerName);
 
             NtpPacket answer;
             try
