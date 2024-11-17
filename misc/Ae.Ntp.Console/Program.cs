@@ -1,6 +1,8 @@
 ﻿using Ae.Ntp.Client;
 using Ae.Ntp.Protocol;
 using Ae.Ntp.Server;
+using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace Ae.Ntp.Console
 {
@@ -102,8 +104,6 @@ namespace Ae.Ntp.Console
             //{
             //    queryClient = ActivatorUtilities.CreateInstance<DnsRacerClient>(provider, upstreams.AsEnumerable());
             //}
-            INtpClient queryClient = ActivatorUtilities.CreateInstance<NtpSystemTimeClient>(provider);
-
             //queryClient = ActivatorUtilities.CreateInstance<DnsRebindMitigationClient>(provider, queryClient);
 
             //ObjectCache mainCache = new MemoryCache("MainCache");
@@ -206,16 +206,44 @@ namespace Ae.Ntp.Console
             //operationClient = new DnsAppMetricsClient(metrics, operationClient);
 
             // Create a "raw" client which deals with buffers directly
-            queryClient = new NtpMetricsClient(queryClient);
 
-            INtpRawClient rawClient = ActivatorUtilities.CreateInstance<NtpRawClient>(provider, queryClient);
+            INtpClient CreateNtpClient(string source)
+            {
+                switch (source)
+                {
+                    case "system":
+                        INtpClient queryClient = ActivatorUtilities.CreateInstance<NtpSystemTimeClient>(provider);
+                        return new NtpMetricsClient(queryClient);
+                    default:
+                        throw new NotImplementedException(source);
+                }
+            }
+            
+            INtpServer CreateNtpServer(NtpServer server)
+            {
+                switch (server.Endpoint.Scheme)
+                {
+                    case "udp":
+                        INtpRawClient rawClient = ActivatorUtilities.CreateInstance<NtpRawClient>(provider, CreateNtpClient(server.Source));
+                        var serverConfig = new NtpUdpServerOptions
+                        {
+                            Endpoint = new IPEndPoint(IPAddress.Parse(server.Endpoint.Host), server.Endpoint.Port)
+                        };
+                        return ActivatorUtilities.CreateInstance<NtpUdpServer>(provider, rawClient, Options.Create(serverConfig));
+                    default:
+                        throw new NotImplementedException(server.Endpoint.ToString());
+                }
+            }
 
-            // Create a dormant capture client for debugging purposes
-            //DnsCaptureRawClient captureRawClient = ActivatorUtilities.CreateInstance<DnsCaptureRawClient>(provider, rawClient);
+            var servers = new List<INtpServer>();
+            foreach (var server in ntpConfiguration.Servers)
+            {
+                servers.Add(CreateNtpServer(server));
+            }
 
             // Create two servers, TCP and UDP to serve answers
             //IDnsServer tcpServer = ActivatorUtilities.CreateInstance<DnsTcpServer>(provider, captureRawClient);
-            INtpServer udpServer = ActivatorUtilities.CreateInstance<NtpUdpServer>(provider, rawClient);
+
 
             // Add a very basic stats panel
             var builder = Host.CreateDefaultBuilder()
@@ -246,12 +274,9 @@ namespace Ae.Ntp.Console
                     //x.AddSingleton(operationClient);
                 });
 
-            await Task.WhenAll(
-                builder.Build().RunAsync(CancellationToken.None),
-                //ReportStats(CancellationToken.None),
-                udpServer.Listen(CancellationToken.None)
-                //tcpServer.Listen(CancellationToken.None)
-            );
+            var tasks = new List<Task> { builder.Build().RunAsync(CancellationToken.None) };
+            tasks.AddRange(servers.Select(x => x.Listen(CancellationToken.None)));
+            await Task.WhenAll(tasks);
         }
     }
 }
