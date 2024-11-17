@@ -113,6 +113,9 @@ namespace Ae.Ntp.Console
                 context.Response.ContentType = "text/html; charset=utf-8";
                 await context.Response.WriteAsync(MINIMAL_CSS);
 
+                await context.Response.WriteAsync($"<h2>Current Time</h2>");
+                await context.Response.WriteAsync($"<p>{DateTime.UtcNow:O}</p>");
+
                 string CreateQueryString(string name, object? value)
                 {
                     IDictionary<string, string?> filters = context.Request.Query.ToDictionary(x => x.Key, x => (string?)x.Value.ToString());
