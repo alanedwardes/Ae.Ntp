@@ -5,14 +5,15 @@ public struct NtpShort
     public ushort Seconds;
     public ushort Fraction;
 
+    public static readonly double Segment = 1000d / ushort.MaxValue;
+
     public TimeSpan Marshaled
     {
-        readonly get => TimeSpan.FromSeconds(Seconds) + TimeSpan.FromMilliseconds(Fraction * (double)1000 / ushort.MaxValue);
+        readonly get => TimeSpan.FromSeconds(Seconds) + TimeSpan.FromMilliseconds(Fraction * Segment);
         set
         {
-            double fraction = value.TotalMilliseconds % 1000 / 1000;
-            Seconds = (ushort)Math.Floor(value.TotalSeconds % ushort.MaxValue);
-            Fraction = (ushort)Math.Round(fraction * ushort.MaxValue);
+            Seconds = (ushort)Math.Floor(value.TotalMilliseconds / 1000);
+            Fraction = (ushort)(value.TotalMilliseconds % 1000 / Segment);
         }
     }
 
