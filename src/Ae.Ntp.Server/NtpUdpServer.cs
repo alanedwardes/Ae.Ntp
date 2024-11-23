@@ -68,7 +68,7 @@ namespace Ae.Ntp.Server
                 try
                 {
                     var result = await _socket.ReceiveMessageFromAsync(buffer, SocketFlags.None, _anyEndpoint, token);
-                    Respond(result.RemoteEndPoint, DateTime.UtcNow, buffer, result.ReceivedBytes, token);
+                    Respond(result.RemoteEndPoint, Stopwatch.StartNew(), buffer, result.ReceivedBytes, token);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -82,7 +82,7 @@ namespace Ae.Ntp.Server
             }
         }
 
-        private async void Respond(EndPoint sender, DateTime recieveTime, Memory<byte> buffer, int queryLength, CancellationToken token)
+        private async void Respond(EndPoint sender, Stopwatch recieveTime, Memory<byte> buffer, int queryLength, CancellationToken token)
         {
             var stopwatch = Stopwatch.StartNew();
 

@@ -2,8 +2,15 @@
 
 namespace Ae.Ntp.Client
 {
-    public sealed class NtpSystemTimeClient : INtpClient
+    public sealed class NtpStaticPacketClient : INtpClient
     {
+        private readonly INtpTimeSource _timeSource;
+
+        public NtpStaticPacketClient(INtpTimeSource timeSource)
+        {
+            _timeSource = timeSource;
+        }
+
         public void Dispose()
         {
         }
@@ -15,7 +22,7 @@ namespace Ae.Ntp.Client
                 VersionNumber = 3,
                 Stratum = 3,
                 Mode = NtpMode.Server,
-                ReferenceTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow },
+                ReferenceTimestamp = new NtpTimestamp { Marshaled = _timeSource.Now },
                 OriginateTimestamp = query.TransmitTimestamp
             };
 

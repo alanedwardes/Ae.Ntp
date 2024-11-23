@@ -2,7 +2,7 @@
   "servers": [
     {
       "endpoint": "udp://0.0.0.0:123",
-      "source": "system",
+      "source": "static",
       "timeZone": "UTC"
     }
   ]

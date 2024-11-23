@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 
 namespace Ae.Ntp.Protocol
 {
@@ -30,7 +31,7 @@ namespace Ae.Ntp.Protocol
         /// <param name="sourceEndpoint">The source endpoint for statistical purposes.</param>
         /// <param name="receiveTime">The timestamp showing when the packet was received.</param>
         /// <param name="serverName">The source server for statistical purposes.</param>
-        public NtpRawClientRequest(int queryLength, EndPoint sourceEndpoint, DateTime receiveTime, string serverName)
+        public NtpRawClientRequest(int queryLength, EndPoint sourceEndpoint, Stopwatch receiveTime, string serverName)
         {
             QueryLength = queryLength;
             SourceEndpoint = sourceEndpoint;
@@ -56,7 +57,7 @@ namespace Ae.Ntp.Protocol
         /// <summary>
         /// The time when the packet was receieved.
         /// </summary>
-        public readonly DateTime ReceiveTime;
+        public readonly Stopwatch ReceiveTime;
     }
 
     /// <summary>

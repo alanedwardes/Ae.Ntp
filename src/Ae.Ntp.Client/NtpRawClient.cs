@@ -10,17 +10,19 @@ namespace Ae.Ntp.Client
     {
         private readonly ILogger<NtpRawClient> _logger;
         private readonly INtpClient _ntpClient;
+        private readonly INtpTimeSource _timeSource;
 
         /// <inheritdoc/>
         [ActivatorUtilitiesConstructor]
-        public NtpRawClient(ILogger<NtpRawClient> logger, INtpClient ntpClient)
+        public NtpRawClient(ILogger<NtpRawClient> logger, INtpClient ntpClient, INtpTimeSource timeSource)
         {
             _logger = logger;
             _ntpClient = ntpClient;
+            _timeSource = timeSource;
         }
 
         /// <inheritdoc/>
-        public NtpRawClient(INtpClient ntpClient) : this(NullLogger<NtpRawClient>.Instance, ntpClient)
+        public NtpRawClient(INtpClient ntpClient, INtpTimeSource timeSource) : this(NullLogger<NtpRawClient>.Instance, ntpClient, timeSource)
         {
         }
 
@@ -62,8 +64,8 @@ namespace Ae.Ntp.Client
                 throw new InvalidOperationException($"The {nameof(NtpPacket.ReceiveTimestamp)} and {nameof(NtpPacket.TransmitTimestamp)} must be zero.");
             }
 
-            answer.ReceiveTimestamp = new NtpTimestamp { Marshaled = request.ReceiveTime };
-            answer.TransmitTimestamp = new NtpTimestamp { Marshaled = DateTime.UtcNow };
+            answer.ReceiveTimestamp = new NtpTimestamp { Marshaled = _timeSource.Now - request.ReceiveTime.Elapsed };
+            answer.TransmitTimestamp = new NtpTimestamp { Marshaled = _timeSource.Now };
 
             var answerLength = 0;
             try
