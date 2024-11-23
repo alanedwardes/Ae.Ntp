@@ -6,15 +6,15 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Ae.Ntp.Client
 {
     /// <inheritdoc/>
-    public sealed class NtpRawClient : INtpRawClient
+    public sealed class NtpPacketProcessor : INtpPacketProcessor
     {
-        private readonly ILogger<NtpRawClient> _logger;
+        private readonly ILogger<NtpPacketProcessor> _logger;
         private readonly INtpClient _ntpClient;
         private readonly INtpTimeSource _timeSource;
 
         /// <inheritdoc/>
         [ActivatorUtilitiesConstructor]
-        public NtpRawClient(ILogger<NtpRawClient> logger, INtpClient ntpClient, INtpTimeSource timeSource)
+        public NtpPacketProcessor(ILogger<NtpPacketProcessor> logger, INtpClient ntpClient, INtpTimeSource timeSource)
         {
             _logger = logger;
             _ntpClient = ntpClient;
@@ -22,7 +22,7 @@ namespace Ae.Ntp.Client
         }
 
         /// <inheritdoc/>
-        public NtpRawClient(INtpClient ntpClient, INtpTimeSource timeSource) : this(NullLogger<NtpRawClient>.Instance, ntpClient, timeSource)
+        public NtpPacketProcessor(INtpClient ntpClient, INtpTimeSource timeSource) : this(NullLogger<NtpPacketProcessor>.Instance, ntpClient, timeSource)
         {
         }
 

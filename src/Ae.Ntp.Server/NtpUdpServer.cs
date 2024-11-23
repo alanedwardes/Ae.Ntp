@@ -18,13 +18,13 @@ namespace Ae.Ntp.Server
         private readonly NtpUdpServerOptions _options;
         private readonly Socket _socket;
         private readonly ILogger<NtpUdpServer> _logger;
-        private readonly INtpRawClient _ntpClient;
+        private readonly INtpPacketProcessor _ntpClient;
 
         /// <summary>
-        /// Construct a new <see cref="NtpUdpServer"/> with a custom logger, options and a <see cref="INtpRawClient"/> to delegate to.
+        /// Construct a new <see cref="NtpUdpServer"/> with a custom logger, options and a <see cref="INtpPacketProcessor"/> to delegate to.
         /// </summary>
         [ActivatorUtilitiesConstructor]
-        public NtpUdpServer(ILogger<NtpUdpServer> logger, INtpRawClient ntpClient, IOptions<NtpUdpServerOptions> options)
+        public NtpUdpServer(ILogger<NtpUdpServer> logger, INtpPacketProcessor ntpClient, IOptions<NtpUdpServerOptions> options)
         {
             _options = options.Value;
             _socket = new Socket(_options.Endpoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
@@ -34,9 +34,9 @@ namespace Ae.Ntp.Server
         }
 
         /// <summary>
-        /// A convenience constructor where only the <see cref="INtpRawClient"/> is mandated.
+        /// A convenience constructor where only the <see cref="INtpPacketProcessor"/> is mandated.
         /// </summary>
-        public NtpUdpServer(INtpRawClient ntpClient, NtpUdpServerOptions options = null)
+        public NtpUdpServer(INtpPacketProcessor ntpClient, NtpUdpServerOptions options = null)
             : this(NullLogger<NtpUdpServer>.Instance, ntpClient, Options.Create(options ?? new NtpUdpServerOptions()))
         {
         }

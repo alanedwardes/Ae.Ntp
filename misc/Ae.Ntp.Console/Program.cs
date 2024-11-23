@@ -55,7 +55,7 @@ namespace Ae.Ntp.Console
                             Instant now = SystemClock.Instance.GetCurrentInstant();
                             return now.InZone(tz).ToDateTimeUnspecified();
                         });
-                        INtpRawClient rawClient = ActivatorUtilities.CreateInstance<NtpRawClient>(provider, CreateNtpClient(server.Source, timeSource), timeSource);
+                        INtpPacketProcessor rawClient = ActivatorUtilities.CreateInstance<NtpPacketProcessor>(provider, CreateNtpClient(server.Source, timeSource), timeSource);
                         var serverConfig = new NtpUdpServerOptions
                         {
                             Endpoint = new IPEndPoint(IPAddress.Parse(server.Endpoint.Host), server.Endpoint.Port)

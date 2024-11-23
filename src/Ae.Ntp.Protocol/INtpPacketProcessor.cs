@@ -7,7 +7,7 @@ namespace Ae.Ntp.Protocol
     /// Represents a client capable of accepting a contiguous region of memory,
     /// reading the query from it, and writing the answer back into it.
     /// </summary>
-    public interface INtpRawClient : IDisposable
+    public interface INtpPacketProcessor : IDisposable
     {
         /// <summary>
         /// Reads the number of bytes specified from the buffer, and writes back an answer to the same buffer.
