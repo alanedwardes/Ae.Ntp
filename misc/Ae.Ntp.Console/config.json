@@ -1,9 +1,19 @@
 {
   "servers": [
     {
-      "endpoint": "udp://0.0.0.0:123",
+      "endpoint": "udp://0.0.0.0:122",
       "source": "static",
       "timeZone": "UTC"
+    },
+    {
+      "endpoint": "udp://0.0.0.0:121",
+      "source": "static",
+      "timeZone": "America/New_York"
+    },
+    {
+      "endpoint": "udp://0.0.0.0:120",
+      "source": "static",
+      "offset": "21900.00:00:00"
     }
   ]
 }

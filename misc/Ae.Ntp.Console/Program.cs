@@ -53,7 +53,7 @@ namespace Ae.Ntp.Console
                         INtpTimeSource timeSource = new NtpFuncTimeSource(() =>
                         {
                             Instant now = SystemClock.Instance.GetCurrentInstant();
-                            return now.InZone(tz).ToDateTimeUnspecified();
+                            return now.InZone(tz).ToDateTimeUnspecified() + server.Offset;
                         });
                         INtpPacketProcessor rawClient = ActivatorUtilities.CreateInstance<NtpPacketProcessor>(provider, CreateNtpClient(server.Source, timeSource), timeSource);
                         var serverConfig = new NtpUdpServerOptions
