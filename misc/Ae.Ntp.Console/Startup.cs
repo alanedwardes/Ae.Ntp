@@ -97,7 +97,7 @@ namespace Ae.Ntp.Console
                     await WriteTable(table);
                 }
 
-                IEnumerable<NtpStatistic> query = _queries.OrderByDescending(x => x.Created);
+                IEnumerable<NtpStatistic> query = _queries.OrderByDescending(x => x.Answer.ReferenceTimestamp.Marshaled);
 
                 var filteredQueries = query.ToArray();
 
@@ -140,7 +140,7 @@ namespace Ae.Ntp.Console
                 var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Drift", "Duration (microseconds)" } };
                 foreach (var ntpStatistic in filteredQueries.Take(pageLimit))
                 {
-                    recentQueries.Rows.Add(ntpStatistic.Created, SenderFilter(ntpStatistic), (ntpStatistic.Created - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize(), ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
+                    recentQueries.Rows.Add(ntpStatistic.Answer.ReferenceTimestamp.Marshaled, SenderFilter(ntpStatistic), (ntpStatistic.Answer.ReferenceTimestamp.Marshaled - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize(), ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
                 }
 
                 await context.Response.WriteAsync($"<h2>Recent Queries</h2>");
@@ -155,7 +155,6 @@ namespace Ae.Ntp.Console
             public NtpPacket Answer { get; set; }
             public TimeSpan? Elapsed { get; set; }
             public IPAddress? Sender { get; set; }
-            public DateTime Created { get; set; }
         }
 
         private readonly ConcurrentQueue<NtpStatistic> _queries = new();
@@ -188,8 +187,7 @@ namespace Ae.Ntp.Console
                         Query = query,
                         Answer = answer,
                         Elapsed = elapsed,
-                        Sender = sender,
-                        Created = DateTime.UtcNow - elapsed
+                        Sender = sender
                     });
 
                     if (_queries.Count > 100_000)
