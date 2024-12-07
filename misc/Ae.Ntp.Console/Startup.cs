@@ -140,7 +140,13 @@ namespace Ae.Ntp.Console
                 var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Drift", "Duration (microseconds)" } };
                 foreach (var ntpStatistic in filteredQueries.Take(pageLimit))
                 {
-                    recentQueries.Rows.Add(ntpStatistic.Answer.ReferenceTimestamp.Marshaled, SenderFilter(ntpStatistic), (ntpStatistic.Answer.ReferenceTimestamp.Marshaled - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize(), ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
+                    var drift = "n/a";
+                    if (!ntpStatistic.Query.TransmitTimestamp.Equals(NtpTimestamp.Zero))
+                    {
+                        drift = (ntpStatistic.Answer.ReferenceTimestamp.Marshaled - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize();
+                    }
+
+                    recentQueries.Rows.Add(ntpStatistic.Answer.ReferenceTimestamp.Marshaled, SenderFilter(ntpStatistic), drift, ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
                 }
 
                 await context.Response.WriteAsync($"<h2>Recent Queries</h2>");
