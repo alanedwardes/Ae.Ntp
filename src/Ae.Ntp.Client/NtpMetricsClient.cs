@@ -63,7 +63,7 @@ namespace Ae.Ntp.Client
             }
 
             var answerTag = new KeyValuePair<string, object>("Answer", answer);
-            var elapsedTag = new KeyValuePair<string, object>("Elapsed", sw.Elapsed);
+            var elapsedTag = new KeyValuePair<string, object>("Elapsed", sw);
             _successCounter.Add(1, queryTag, answerTag, elapsedTag);
             return answer;
         }

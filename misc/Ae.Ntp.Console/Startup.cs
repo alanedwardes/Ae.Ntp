@@ -1,8 +1,10 @@
 ﻿using Ae.Ntp.Client;
 using Ae.Ntp.Protocol;
+using Humanizer;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.Concurrent;
 using System.Data;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 
@@ -135,10 +137,10 @@ namespace Ae.Ntp.Console
                 await context.Response.WriteAsync($"<p>Top servers used.</p>");
                 await GroupToTable(filteredQueries.GroupBy(ServerFilter), "Server", "Hits");
 
-                var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Duration (microseconds)" } };
+                var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Drift", "Duration (microseconds)" } };
                 foreach (var ntpStatistic in filteredQueries.Take(pageLimit))
                 {
-                    recentQueries.Rows.Add(ntpStatistic.Created, SenderFilter(ntpStatistic), ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
+                    recentQueries.Rows.Add(ntpStatistic.Created, SenderFilter(ntpStatistic), (ntpStatistic.Created - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize(), ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
                 }
 
                 await context.Response.WriteAsync($"<h2>Recent Queries</h2>");
@@ -153,7 +155,7 @@ namespace Ae.Ntp.Console
             public NtpPacket Answer { get; set; }
             public TimeSpan? Elapsed { get; set; }
             public IPAddress? Sender { get; set; }
-            public DateTime Created { get; } = DateTime.UtcNow;
+            public DateTime Created { get; set; }
         }
 
         private readonly ConcurrentQueue<NtpStatistic> _queries = new();
@@ -177,11 +179,18 @@ namespace Ae.Ntp.Console
             {
                 var query = GetObjectFromTags<NtpPacket>(tags, "Query");
                 var answer = GetObjectFromTags<NtpPacket>(tags, "Answer");
-                var elapsed = GetObjectFromTags<TimeSpan?>(tags, "Elapsed");
+                var elapsed = GetObjectFromTags<Stopwatch?>(tags, "Elapsed")?.Elapsed ?? TimeSpan.Zero;
                 var sender = query.Tags.TryGetValue("Sender", out var rawEndpoint) && rawEndpoint is not null && rawEndpoint is IPEndPoint endpoint ? endpoint.Address : null;
                 if (sender != null)
                 {
-                    _queries.Enqueue(new NtpStatistic { Query = query, Answer = answer, Elapsed = elapsed, Sender = sender });
+                    _queries.Enqueue(new NtpStatistic
+                    {
+                        Query = query,
+                        Answer = answer,
+                        Elapsed = elapsed,
+                        Sender = sender,
+                        Created = DateTime.UtcNow - elapsed
+                    });
 
                     if (_queries.Count > 100_000)
                     {
