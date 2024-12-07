@@ -57,14 +57,9 @@ namespace Ae.Ntp.Client
                 _exceptionCounter.Add(1, queryTag);
                 throw;
             }
-            finally
-            {
-                sw.Stop();
-            }
 
             var answerTag = new KeyValuePair<string, object>("Answer", answer);
-            var elapsedTag = new KeyValuePair<string, object>("Elapsed", sw);
-            _successCounter.Add(1, queryTag, answerTag, elapsedTag);
+            _successCounter.Add(1, queryTag, answerTag);
             return answer;
         }
     }

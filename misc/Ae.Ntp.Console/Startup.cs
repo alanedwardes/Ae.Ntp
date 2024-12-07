@@ -4,7 +4,6 @@ using Humanizer;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.Concurrent;
 using System.Data;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 
@@ -137,7 +136,7 @@ namespace Ae.Ntp.Console
                 await context.Response.WriteAsync($"<p>Top servers used.</p>");
                 await GroupToTable(filteredQueries.GroupBy(ServerFilter), "Server", "Hits");
 
-                var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Drift", "Duration (microseconds)" } };
+                var recentQueries = new DataTable { Columns = { "Timestamp", "Sender", "Drift", "Transmit" } };
                 foreach (var ntpStatistic in filteredQueries.Take(pageLimit))
                 {
                     var drift = "n/a";
@@ -146,7 +145,7 @@ namespace Ae.Ntp.Console
                         drift = (ntpStatistic.Answer.ReferenceTimestamp.Marshaled - ntpStatistic.Query.TransmitTimestamp.Marshaled).Humanize();
                     }
 
-                    recentQueries.Rows.Add(ntpStatistic.Answer.ReferenceTimestamp.Marshaled, SenderFilter(ntpStatistic), drift, ntpStatistic.Elapsed?.TotalMicroseconds.ToString("F"));
+                    recentQueries.Rows.Add(ntpStatistic.Answer.ReferenceTimestamp.Marshaled, SenderFilter(ntpStatistic), drift, ntpStatistic.Query.TransmitTimestamp.Marshaled);
                 }
 
                 await context.Response.WriteAsync($"<h2>Recent Queries</h2>");
@@ -159,7 +158,6 @@ namespace Ae.Ntp.Console
         {
             public NtpPacket Query { get; set; }
             public NtpPacket Answer { get; set; }
-            public TimeSpan? Elapsed { get; set; }
             public IPAddress? Sender { get; set; }
         }
 
@@ -184,7 +182,6 @@ namespace Ae.Ntp.Console
             {
                 var query = GetObjectFromTags<NtpPacket>(tags, "Query");
                 var answer = GetObjectFromTags<NtpPacket>(tags, "Answer");
-                var elapsed = GetObjectFromTags<Stopwatch?>(tags, "Elapsed")?.Elapsed ?? TimeSpan.Zero;
                 var sender = query.Tags.TryGetValue("Sender", out var rawEndpoint) && rawEndpoint is not null && rawEndpoint is IPEndPoint endpoint ? endpoint.Address : null;
                 if (sender != null)
                 {
@@ -192,7 +189,6 @@ namespace Ae.Ntp.Console
                     {
                         Query = query,
                         Answer = answer,
-                        Elapsed = elapsed,
                         Sender = sender
                     });
 
